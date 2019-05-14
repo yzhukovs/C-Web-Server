@@ -8,19 +8,7 @@ all: server
 server: $(OBJS)
 	gcc -o $@ $^
 
-net.o: net.c net.h
-
-server.o: server.c net.h
-
-file.o: file.c file.h
-
-mime.o: mime.c mime.h
-
-cache.o: cache.c cache.h
-
-hashtable.o: hashtable.c hashtable.h
-
-llist.o: llist.c llist.h
+%.o: %.c %.h
 
 clean:
 	rm -f $(OBJS)
