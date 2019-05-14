@@ -52,34 +52,41 @@ int send_response(int fd, char *header, char *content_type, void *body, int cont
 {
     const int max_response_size = 262144;
     char response[max_response_size];
-
-    time_t t = time(NULL); //t is a large interger representing time elapsed
+    
+    // Build HTTP response and store it in response
+    
+    // get the current timestamp
+    time_t t = time(NULL);   // t is a large integer representing time elapsed
     struct tm *local_time = localtime(&t);
     char *timestamp = asctime(local_time);
     
-    // Build HTTP response and store it in response
-
+    ///////////////////
+    // IMPLEMENT ME! //
+    ///////////////////
     int response_length = sprintf(response,
-            "%s\n" //header
-            "Connection: close\n"
-            "Content-Type: %s\n"
-            "Content-Length: %d\n"
-            "\n"
-            "Date: %s"
-            "%s\n\n",
-            
-            header, content_type, content_length, timestamp, body
-            );
-
+                                  "%s\n"
+                                  "Connection: close\n"
+                                  "Content-Type: %s\n"
+                                  "Content-Length: %d\n"
+                                  "Date: %s\n",
+                                  header,
+                                  content_type,
+                                  content_length,
+                                  timestamp
+                                  );
+    
+    memcpy(response + response_length, body, content_length);
+    response_length += content_length;
+    
     // Send it all!
-    //unsigned long response_length = strlen(response);
     int rv = send(fd, response, response_length, 0);
-    printf("Build response: %s\n", response);
+    
+    // printf("Built response: %s\n", response);
     
     if (rv < 0) {
         perror("send");
     }
-
+    
     return rv;
 }
 
@@ -109,7 +116,7 @@ void resp_404(int fd)
     char *mime_type;
 
     // Fetch the 404.html file
-    snprintf(filepath, sizeof filepath, "%s/404.html", SERVER_FILES);
+    snprintf(filepath, sizeof filepath, "%s/cat.jpg", SERVER_ROOT);
     filedata = file_load(filepath);
 
     if (filedata == NULL) {
@@ -147,8 +154,7 @@ void get_file(int fd, struct cache *cache, char *request_path)
     send_response(fd, "HTTP/1.1 404 NOT FOUND", mime_type, filedata->data, filedata->size);
     
     file_free(filedata);
-    
-    
+   
 }
 
 /**
@@ -175,8 +181,7 @@ void handle_http_request(int fd, struct cache *cache)
    char method[512];
     char path[8192];
     sscanf("%s %s", method, path);
-    
-    
+
     
     // Read request
     int bytes_recvd = recv(fd, request, request_buffer_size - 1, 0);
