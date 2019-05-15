@@ -32,7 +32,7 @@ void free_entry(struct cache_entry *entry)
     free(entry->content);
     free(entry->content_type);
     free(entry) ;
-    free(entry->content_length);
+   // free(entry->content_length);
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
@@ -131,9 +131,17 @@ void cache_put(struct cache *cache, char *path, char *content_type, void *conten
     cache->cur_size++ ;
     
     //if current cache size is greater than max cache size
+     if (cache->cur_size > cache->max_size) {
     //remove the entry from the tail of double linked list
+         struct cache_entry *remove_entry = dllist_remove_tail(cache);
     //removed it from the hash_table
+         hashtable_delete(cache->index, remove_entry->path);
     //free cache entry
+          free_entry(remove_entry);
+         cache->cur_size = cache->max_size;
+         
+     }
+    free_entry(entry);
 }
 
 /**
@@ -141,6 +149,17 @@ void cache_put(struct cache *cache, char *path, char *content_type, void *conten
  */
 struct cache_entry *cache_get(struct cache *cache, char *path)
 {
+    // find the cache entry pointer by path in the hash table.
+    struct cache_entry *entry = hashtable_get(cache->index, path);
+    if (entry != NULL){
+        //Move the cache entry to the head of the doubly-linked list.
+        dllist_move_to_head(cache, entry);
+    } else {
+        //Return the cache entry pointer.
+        printf("Page not in cache/n");
+    }
+    
+    return entry;
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
