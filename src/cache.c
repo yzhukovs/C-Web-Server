@@ -9,6 +9,15 @@
  */
 struct cache_entry *alloc_entry(char *path, char *content_type, void *content, int content_length)
 {
+    struct cache_entry *entry_allloc = malloc(sizeof(cache_entry));
+    entry_allloc->path = path;
+    entry_allloc->content_type = content_type;
+    entry_allloc->content_length = content_length;
+    entry_allloc->content = content;
+    
+    return entry_allloc;
+    
+    
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
@@ -19,6 +28,11 @@ struct cache_entry *alloc_entry(char *path, char *content_type, void *content, i
  */
 void free_entry(struct cache_entry *entry)
 {
+    free(entry->path);
+    free(entry->content);
+    free(entry->content_type);
+    free(entry) ;
+    free(entry->content_length);
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
@@ -66,22 +80,7 @@ void dllist_move_to_head(struct cache *cache, struct cache_entry *ce)
 }
 
 
-/**
- * Removes the tail from the list and returns it
- * 
- * NOTE: does not deallocate the tail
- */
-struct cache_entry *dllist_remove_tail(struct cache *cache)
-{
-    struct cache_entry *oldtail = cache->tail;
 
-    cache->tail = oldtail->prev;
-    cache->tail->next = NULL;
-
-    cache->cur_size--;
-
-    return oldtail;
-}
 
 /**
  * Create a new cache
@@ -122,9 +121,19 @@ void cache_free(struct cache *cache)
  */
 void cache_put(struct cache *cache, char *path, char *content_type, void *content, int content_length)
 {
-    ///////////////////
-    // IMPLEMENT ME! //
-    ///////////////////
+    //Allocate new cache_entry
+ struct cache_entry *entry = alloc_entry(path, content_type, content, content_length);
+    //Assign an entry to the head of doubled linked list
+    dllist_insert_head(cache, entry) ;
+    //Keep the entry in the hashtable and keep track by index's path
+    hashtable_put(cache->index, path, entry) ;
+    //increment cache size
+    cache->cur_size++ ;
+    
+    //if current cache size is greater than max cache size
+    //remove the entry from the tail of double linked list
+    //removed it from the hash_table
+    //free cache entry
 }
 
 /**

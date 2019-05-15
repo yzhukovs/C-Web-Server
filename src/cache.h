@@ -2,14 +2,14 @@
 #define _WEBCACHE_H_
 
 // Individual hash table entry
-struct cache_entry {
+typedef struct cache_entry {
     char *path;   // Endpoint path--key to the cache
     char *content_type;
     int content_length;
     void *content;
 
     struct cache_entry *prev, *next; // Doubly-linked list
-};
+}cache_entry;
 
 // A cache
 struct cache {
