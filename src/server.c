@@ -68,7 +68,8 @@ int send_response(int fd, char *header, char *content_type, void *body, int cont
                                   "Connection: close\n"
                                   "Content-Type: %s\n"
                                   "Content-Length: %d\n"
-                                  "Date: %s\n",
+                                  "Date: %s\n"
+                                  "\n",
                                   header,
                                   content_type,
                                   content_length,
@@ -102,7 +103,7 @@ void get_d20(int fd)
     sprintf(string, "%d\n", random_number);
     
     // Use send_response() to send it back as text/plain data
-    send_response(fd, "HTTP/1.1 200 OK", "text/plain", string, strlen(string));
+    send_response(fd, "HTTP/1.1 200 OK", "text/plain", &string, strlen(string));
    
 }
 
@@ -137,6 +138,15 @@ void resp_404(int fd)
  */
 void get_file(int fd, struct cache *cache, char *request_path)
 {
+    struct cache_entry *entry = cache_get(cache, request_path);
+    if (entry != NULL)
+    {
+       send_response(fd, "HTTP/1.1 200 OK", entry->content_type, entry->content, entry->content_length);
+    }
+    else
+    {
+       
+  
    char filepath[4096];
    struct file_data *filedata;
    char *mime_type;
@@ -147,16 +157,16 @@ void get_file(int fd, struct cache *cache, char *request_path)
     
     if (filedata == NULL) {
         resp_404(fd);
-    }
+    }else {
     
     mime_type = mime_type_get(filepath);
-    
+    cache_put(cache, request_path, mime_type, filedata->data, filedata->size);
     send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
     
     file_free(filedata);
-   
+    }
 }
-
+}
 /**
  * Search for the end of the HTTP header
  * 
@@ -191,7 +201,7 @@ void handle_http_request(int fd, struct cache *cache)
         return;
     }
 
-    resp_404(fd);
+  //  resp_404(fd);
     
     // Read the first two components of the first line of the request 
  
@@ -202,10 +212,14 @@ void handle_http_request(int fd, struct cache *cache)
 //    //    Otherwise serve the requested file by calling get_file()
 get_d20(fd);
       } else {
-          resp_404(fd);
+        get_file(fd, cache, path);
     }
  }
     // (Stretch) If POST, handle the post request
+    
+ else  {
+      resp_404(fd);
+ }
 }
 
 /**

@@ -80,6 +80,23 @@ void dllist_move_to_head(struct cache *cache, struct cache_entry *ce)
     }
 }
 
+/**
+ * Removes the tail from the list and returns it
+ *
+ * NOTE: does not deallocate the tail
+ */
+struct cache_entry *dllist_remove_tail(struct cache *cache)
+{
+    struct cache_entry *oldtail = cache->tail;
+    
+    cache->tail = oldtail->prev;
+    cache->tail->next = NULL;
+    
+    cache->cur_size--;
+    
+    return oldtail;
+}
+
 
 
 
@@ -137,18 +154,18 @@ void cache_put(struct cache *cache, char *path, char *content_type, void *conten
     //Assign an entry to the head of doubled linked list
     dllist_insert_head(cache, entry) ;
     //Keep the entry in the hashtable and keep track by index's path
-    hashtable_put(cache->index, path, entry) ;
+    hashtable_put(cache->index, entry->path, entry) ;
     //increment cache size
+     cache->cur_size++ ;
     while (cache->cur_size > cache->max_size) {
         struct cache_entry *old_entry = dllist_remove_tail(cache) ;
         
-        hashtable_delete(cache->index, path) ;
+        hashtable_delete(cache->index, old_entry->path) ;
+        
         free_entry(old_entry) ;
+        
     }
-    
-   
-    
-    
+
 }
 
 /**
@@ -161,12 +178,13 @@ struct cache_entry *cache_get(struct cache *cache, char *path)
     if (entry != NULL){
         //Move the cache entry to the head of the doubly-linked list.
         dllist_move_to_head(cache, entry);
+            return entry;  //Return the cache entry pointer.
     } else {
-        //Return the cache entry pointer.
-        printf("Page not in cache/n");
+      
+        return NULL;
     }
     
-    return entry;
+
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
