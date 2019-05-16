@@ -9,13 +9,14 @@
  */
 struct cache_entry *alloc_entry(char *path, char *content_type, void *content, int content_length)
 {
-    struct cache_entry *entry_allloc = malloc(sizeof(cache_entry));
-    entry_allloc->path = path;
-    entry_allloc->content_type = content_type;
-    entry_allloc->content_length = content_length;
-    entry_allloc->content = content;
+    struct cache_entry *entry_alloc = malloc(sizeof *entry_alloc);
+    entry_alloc->path = strdup(path);
+    entry_alloc->content_type = strdup(content_type);
+    entry_alloc->content_length = content_length;
+    entry_alloc->content = malloc(content_length);
+    memcpy(entry_alloc->content, content, content_length);
     
-    return entry_allloc;
+    return entry_alloc;
     
     
     ///////////////////
@@ -93,6 +94,16 @@ struct cache *cache_create(int max_size, int hashsize)
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+    struct cache *cache = malloc(sizeof *cache) ;
+    cache->head = NULL ;
+    cache->tail = NULL ;
+    
+    cache ->index = hashtable_create(hashsize, NULL);
+    cache->max_size = max_size ;
+    cache->cur_size =  0 ;
+    
+    return cache ;
+    
 }
 
 void cache_free(struct cache *cache)
@@ -128,20 +139,16 @@ void cache_put(struct cache *cache, char *path, char *content_type, void *conten
     //Keep the entry in the hashtable and keep track by index's path
     hashtable_put(cache->index, path, entry) ;
     //increment cache size
-    cache->cur_size++ ;
+    while (cache->cur_size > cache->max_size) {
+        struct cache_entry *old_entry = dllist_remove_tail(cache) ;
+        
+        hashtable_delete(cache->index, path) ;
+        free_entry(old_entry) ;
+    }
     
-    //if current cache size is greater than max cache size
-     if (cache->cur_size > cache->max_size) {
-    //remove the entry from the tail of double linked list
-         struct cache_entry *remove_entry = dllist_remove_tail(cache);
-    //removed it from the hash_table
-         hashtable_delete(cache->index, remove_entry->path);
-    //free cache entry
-          free_entry(remove_entry);
-         cache->cur_size = cache->max_size;
-         
-     }
-    free_entry(entry);
+   
+    
+    
 }
 
 /**
